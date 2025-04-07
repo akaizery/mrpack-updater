@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modrinth Mass Checker</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header id="main-header">
+        <div class="header-content">
+            <span class="site-title">Modrinth Mass Mod Checker</span>
+            <nav>
+                <a href="#preparation" class="nav-button">Preparation</a>
+                <a href="#input" class="nav-button">Check Mods</a>
+                <a href="#results" class="nav-button">Results</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="preparation" class="preparation-section section-card">
+            <h2>Preparation Steps</h2>
+            <ol>
+                <li>
+                    Download the Python script:
+                    <div class="download-buttons">
+                        <a href="https://github.com/maxgamergg/mass-mod-checker-for-modrinth/releases/download/Release/get-mod-ID.py" class="button button-secondary">Download Script</a>
+                        <a href="https://github.com/maxgamergg/mass-mod-checker-for-modrinth" class="button button-outline">View Source</a>
+                    </div>
+                </li>
+                <li>Install Python on your system if you haven't already. You can download it from the <a href="https://www.python.org/downloads/" target="_blank">official Python website</a>.</li>
+                <li>Install the necessary libraries. Open your terminal or command prompt and run: <pre><code>pip install requests pyperclip tomli</code></pre></li>
+                <li>Execute the downloaded Python script and select your Minecraft mods folder when prompted.</li>
+                <li>Follow the instructions provided by the script if needet.</li>
+                <li>Copy the IDs collected by the script.</li>
+            </ol>
+        </div>
+
+        <div id="input" class="input-section section-card">
+             <h2>1. Enter Installed Mods</h2>
+            <label for="mod-list">Mod IDs or Slugs (one per line):</label>
+            <textarea id="mod-list" rows="10" placeholder="e.g.\nsodium\nfabric-api\ncreate"></textarea>
+
+            <h2>2. Select Target Version</h2>
+             <div class="version-loader-inputs">
+                <div>
+                    <label for="target-mc-version">Target MC Version:</label>
+                    <input type="text" id="target-mc-version" placeholder="e.g. 1.20.4">
+                </div>
+                <div>
+                    <label for="target-loader">Target Loader:</label>
+                    <select id="target-loader">
+                        <option value="fabric">Fabric</option>
+                        <option value="forge">Forge</option>
+                        <option value="quilt">Quilt</option>
+                        <option value="neoforge">NeoForge</option>
+                    </select>
+                </div>
+            </div>
+            <button id="check-button" class="button button-primary">Check for Updates</button>
+             <p id="status-message"></p>
+        </div>
+
+        <div id="results" class="results-section section-card">
+            <h2>3. Results</h2>
+            <div class="filter-controls">
+                    <label for="filter-name">Filter by Name:</label>
+                    <input type="text" id="filter-name" placeholder="Enter mod name...">
+
+                    <label for="filter-availability">Filter by Availability:</label>
+                    <select id="filter-availability">
+                        <option value="all">Show All</option>
+                        <option value="available">Only Available</option>
+                        <option value="not-available">Only Not Available</option>
+                    </select>
+            </div>
+            <div class="table-wrapper">
+                <table id="results-table">
+                    <thead>
+                        <tr>
+                            <th>Mod Name</th>
+                            <th>Status for Target Version</th>
+                            <th>Modrinth Link</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <footer id="main-footer">
+        <p>
+            Made by <a href="https://github.com/maxgamergg" target="_blank" rel="noopener noreferrer">Maxgamer</a> - <a href="https://maxgamergg.github.io/" target="_blank" rel="noopener noreferrer">Meteroite Studio</a>
+        </p>
+        <p>MIT License</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
