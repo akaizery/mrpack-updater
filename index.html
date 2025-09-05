@@ -70,7 +70,7 @@
                     <thead>
                         <tr>
                             <th>Mod Name</th>
-                            <th>Target File</th>
+                            <th>Target Version</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
@@ -83,7 +83,11 @@
         <section id="download-section" class="card hidden">
             <h2>4. Generate New Modpack</h2>
             <p>Your customizations are ready. Click the button below to download your new <code>.mrpack</code> file.</p>
-            <button id="generate-pack-btn">Download New Modpack</button>
+            <!-- Button-Struktur angepasst -->
+            <button id="generate-pack-btn">
+                <span class="btn-text">Download New Modpack</span>
+                <div class="spinner-inline hidden"></div>
+            </button>
         </section>
     </main>
 
@@ -96,13 +100,6 @@
             </div>
             <div class="footer-links">
                 <a href="https://github.com/akaizery/mrpack-updater">Source Code</a>
-                
-                <!-- <a href="#" class="nav-link">Main Page</a>  -->
-                <!-- I forgot...    I dont have a page for myself... ohh -->
-
-                <!-- <a href="#" class="nav-link">How-To Guide</a> -->
-            
-                <!-- Why did i do this at all??-->
             </div>
         </div>
     </footer>

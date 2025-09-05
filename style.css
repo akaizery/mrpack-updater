@@ -101,19 +101,54 @@ button {
     font-size: 16px;
     font-weight: 600;
     transition: background-color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
 button:hover { background-color: var(--primary-color-hover); }
 button:disabled { background-color: #888; cursor: not-allowed; }
 
 #loading-indicator { display: flex; align-items: center; gap: 15px; margin-top: 15px; }
 .spinner { border: 4px solid var(--text-color-light); width: 24px; height: 24px; border-radius: 50%; border-left-color: var(--primary-color); animation: spin 1s ease infinite; }
+
+/* NEU: Spinner für Buttons */
+.spinner-inline {
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border-left-color: #fff;
+    animation: spin 1s ease infinite;
+}
+
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
 .table-wrapper { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-top: 15px; 
+    table-layout: fixed;
+}
+th, td { 
+    padding: 12px; 
+    text-align: left; 
+    border-bottom: 1px solid var(--border-color); 
+    vertical-align: middle; 
+}
 th { background-color: var(--bg-color); font-weight: 600; }
-td:nth-child(2) { font-family: monospace; font-size: 0.9em; color: var(--text-color-light); }
+
+th:nth-child(1) { width: 35%; }
+th:nth-child(2) { width: 25%; }
+th:nth-child(3) { width: 20%; }
+th:nth-child(4) { width: 20%; }
+
+td:nth-child(1), td:nth-child(2) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 
 .status-cell { display: flex; align-items: center; gap: 8px; font-weight: bold; }
 .status-icon { font-size: 1.2em; }

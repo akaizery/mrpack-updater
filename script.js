@@ -21,11 +21,19 @@ document.addEventListener('DOMContentLoaded', () => {
         originalZip: null,
         indexJson: null,
         modDetails: [],
+        otherFiles: [],
     };
 
+    function extractVersion(filename) {
+        if (!filename || filename === 'N/A') return 'N/A';
+        const match = filename.match(/(\d+\.\d+[\w.-]*)/);
+        return match ? match[0] : '???';
+    }
+
     UPLOAD_INPUT.addEventListener('change', async (event) => {
-        const file = event.target.files[0];
+        const file = event.target.files[0]; 
         if (!file) return;
+
         try {
             appState.originalZip = await JSZip.loadAsync(file);
             const indexFile = appState.originalZip.file('modrinth.index.json');
@@ -61,7 +69,19 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const promises = appState.indexJson.files.map(file => getModUpdateInfo(file, targetMcVersion, 'fabric'));
+        const modsToScan = [];
+        const otherFilesToKeep = [];
+        appState.indexJson.files.forEach(file => {
+            if (file.path.startsWith('mods/')) {
+                modsToScan.push(file);
+            } else {
+                otherFilesToKeep.push(file);
+            }
+        });
+        
+        appState.otherFiles = otherFilesToKeep;
+
+        const promises = modsToScan.map(file => getModUpdateInfo(file, targetMcVersion, 'fabric'));
         appState.modDetails = await Promise.all(promises);
 
         applyFiltersAndRender();
@@ -161,14 +181,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 else defaultAction = defaultActionForIncompatible;
 
                 const baseFileName = mod.modFileName.replace(/\.disabled$/, '');
-                let targetFileText = 'N/A';
-                if (defaultAction === 'update') targetFileText = mod.updateData.path.split('/').pop();
-                else if (defaultAction === 'keep') targetFileText = mod.modFileName;
-                else if (defaultAction === 'disable') targetFileText = `${baseFileName}.disabled`;
+                let targetVersionText = 'N/A';
+                if (defaultAction === 'update') targetVersionText = extractVersion(mod.updateData.path.split('/').pop());
+                else if (defaultAction === 'keep') targetVersionText = extractVersion(mod.modFileName);
+                else if (defaultAction === 'disable') targetVersionText = extractVersion(baseFileName);
 
                 row.innerHTML = `
                     <td><a href="https://modrinth.com/mod/${mod.projectId || ''}" target="_blank" rel="noopener noreferrer">${mod.displayName}</a></td>
-                    <td class="target-file-cell">${targetFileText}</td>
+                    <td class="target-version-cell">${targetVersionText}</td>
                     <td>
                         <div class="status-cell ${statusClass}">
                             <span class="status-icon">${statusIcon}</span>
@@ -201,56 +221,77 @@ document.addEventListener('DOMContentLoaded', () => {
             const mod = appState.modDetails.find(m => (m.projectId || m.modFileName) === modId);
             if (!mod) return;
 
-            const targetCell = row.querySelector('.target-file-cell');
+            const targetCell = row.querySelector('.target-version-cell');
             const selectedAction = event.target.value;
             const baseFileName = mod.modFileName.replace(/\.disabled$/, '');
 
             let newText = 'N/A';
-            if (selectedAction === 'update' && mod.updateData) newText = mod.updateData.path.split('/').pop();
-            else if (selectedAction === 'keep') newText = mod.modFileName;
-            else if (selectedAction === 'disable') newText = `${baseFileName}.disabled`;
+            if (selectedAction === 'update' && mod.updateData) newText = extractVersion(mod.updateData.path.split('/').pop());
+            else if (selectedAction === 'keep') newText = extractVersion(mod.modFileName);
+            else if (selectedAction === 'disable') newText = extractVersion(baseFileName);
             
             targetCell.textContent = newText;
         }
     });
 
     GENERATE_PACK_BTN.addEventListener('click', async () => {
-        const newIndexJson = JSON.parse(JSON.stringify(appState.indexJson));
-        newIndexJson.dependencies.minecraft = MC_VERSION_INPUT.value.trim();
-        newIndexJson.dependencies['fabric-loader'] = LOADER_VERSION_INPUT.value.trim();
-        newIndexJson.files = [];
-
-        document.querySelectorAll('#mod-list-body tr').forEach(row => {
-            const modId = row.dataset.modId;
-            const mod = appState.modDetails.find(m => (m.projectId || m.modFileName) === modId);
-            const action = row.querySelector('.action-select').value;
-            
-            if (action === 'update' && mod.updateData) {
-                newIndexJson.files.push(mod.updateData);
-            } else if (action === 'keep') {
-                newIndexJson.files.push(mod.originalFile);
-            } else if (action === 'disable') {
-                const disabledFile = JSON.parse(JSON.stringify(mod.originalFile));
-                disabledFile.path = disabledFile.path.replace(/\.disabled$/, '') + '.disabled';
-                newIndexJson.files.push(disabledFile);
-            }
-        });
+        const btnText = GENERATE_PACK_BTN.querySelector('.btn-text');
+        const btnSpinner = GENERATE_PACK_BTN.querySelector('.spinner-inline');
         
-        const newZip = new JSZip();
-        newZip.file('modrinth.index.json', JSON.stringify(newIndexJson, null, 2));
-        for (const fileName in appState.originalZip.files) {
-            if (fileName !== 'modrinth.index.json') {
-                const fileData = await appState.originalZip.files[fileName].async('blob');
-                newZip.file(fileName, fileData);
+        // --- Ladezustand aktivieren ---
+        GENERATE_PACK_BTN.disabled = true;
+        btnText.textContent = 'Generating...';
+        btnSpinner.classList.remove('hidden');
+
+        try {
+            const newIndexJson = JSON.parse(JSON.stringify(appState.indexJson));
+            newIndexJson.dependencies.minecraft = MC_VERSION_INPUT.value.trim();
+            newIndexJson.dependencies['fabric-loader'] = LOADER_VERSION_INPUT.value.trim();
+            newIndexJson.files = [];
+
+            document.querySelectorAll('#mod-list-body tr').forEach(row => {
+                const modId = row.dataset.modId;
+                const mod = appState.modDetails.find(m => (m.projectId || m.modFileName) === modId);
+                const action = row.querySelector('.action-select').value;
+                
+                if (action === 'update' && mod.updateData) {
+                    newIndexJson.files.push(mod.updateData);
+                } else if (action === 'keep') {
+                    newIndexJson.files.push(mod.originalFile);
+                } else if (action === 'disable') {
+                    const disabledFile = JSON.parse(JSON.stringify(mod.originalFile));
+                    disabledFile.path = disabledFile.path.replace(/\.disabled$/, '') + '.disabled';
+                    newIndexJson.files.push(disabledFile);
+                }
+            });
+
+            if (appState.otherFiles.length > 0) {
+                newIndexJson.files.push(...appState.otherFiles);
             }
+            
+            const newZip = new JSZip();
+            newZip.file('modrinth.index.json', JSON.stringify(newIndexJson, null, 2));
+            for (const fileName in appState.originalZip.files) {
+                if (fileName !== 'modrinth.index.json') {
+                    const fileData = await appState.originalZip.files[fileName].async('blob');
+                    newZip.file(fileName, fileData);
+                }
+            }
+            const content = await newZip.generateAsync({ type: 'blob' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(content);
+            link.download = `updated-${appState.indexJson.name.replace(/\s/g, '_')}.mrpack`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+
+        } catch (error) {
+            console.error("Error generating the new .mrpack file:", error);
+            alert('An error occurred while generating the new file.');
+        } finally {
+            // --- Ladezustand beenden, egal ob erfolgreich oder nicht ---
+            GENERATE_PACK_BTN.disabled = false;
+            btnText.textContent = 'Download New Modpack';
+            btnSpinner.classList.add('hidden');
         }
-        const content = await newZip.generateAsync({ type: 'blob' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(content);
-        link.download = `updated-${appState.indexJson.name.replace(/\s/g, '_')}.mrpack`;
-        link.click();
-        URL.revokeObjectURL(link.href);
     });
 });
-
-// It was a lot simpler in my head...
