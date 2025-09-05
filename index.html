@@ -29,13 +29,19 @@
             <div id="current-pack-info"></div>
             <div class="form-group">
                 <label for="mc-version">Target Minecraft Version:</label>
-                <input type="text" id="mc-version" placeholder="e.g., 1.21.1">
+
+                <select id="mc-version" disabled>
+                    <option>Loading versions...</option>
+                </select>
             </div>
             <div class="form-group">
                 <label for="loader-version">Target Fabric Loader Version:</label>
-                <input type="text" id="loader-version" placeholder="e.g., 0.16.0">
+
+                <select id="loader-version" disabled>
+                    <option>Select MC version first...</option>
+                </select>
             </div>
-            <button id="check-updates-btn">Check for Updates</button>
+            <button id="check-updates-btn" disabled>Check for Updates</button>
             <div id="loading-indicator" class="hidden">
                 <div class="spinner"></div>
                 <p>Checking mods... (this might take a moment for large packs)</p>
@@ -83,7 +89,6 @@
         <section id="download-section" class="card hidden">
             <h2>4. Generate New Modpack</h2>
             <p>Your customizations are ready. Click the button below to download your new <code>.mrpack</code> file.</p>
-            <!-- Button-Struktur angepasst -->
             <button id="generate-pack-btn">
                 <span class="btn-text">Download New Modpack</span>
                 <div class="spinner-inline hidden"></div>

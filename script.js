@@ -24,6 +24,67 @@ document.addEventListener('DOMContentLoaded', () => {
         otherFiles: [],
     };
 
+    async function populateMcVersions() {
+        try {
+            const response = await fetch('https://meta.fabricmc.net/v2/versions/game');
+            if (!response.ok) throw new Error('Could not fetch Fabric game versions.');
+            const versions = await response.json();
+            
+            MC_VERSION_INPUT.innerHTML = '<option value="">Select a version...</option>';
+            versions
+                .filter(v => v.stable === true)
+                .forEach(v => {
+                    const option = document.createElement('option');
+                    option.value = v.version;
+                    option.textContent = v.version;
+                    MC_VERSION_INPUT.appendChild(option);
+                });
+            MC_VERSION_INPUT.disabled = false;
+        } catch (error) {
+            console.error(error);
+            MC_VERSION_INPUT.innerHTML = '<option>Error loading versions</option>';
+        }
+    }
+
+    async function populateLoaderVersions(mcVersion) {
+        if (!mcVersion) {
+            LOADER_VERSION_INPUT.innerHTML = '<option>Select MC version first...</option>';
+            LOADER_VERSION_INPUT.disabled = true;
+            return;
+        }
+
+        LOADER_VERSION_INPUT.innerHTML = '<option>Loading loaders...</option>';
+        LOADER_VERSION_INPUT.disabled = true;
+
+        try {
+            const response = await fetch(`https://meta.fabricmc.net/v2/versions/loader/${mcVersion}`);
+            if (!response.ok) throw new Error(`Could not fetch loaders for MC ${mcVersion}.`);
+            const loaders = await response.json();
+
+            LOADER_VERSION_INPUT.innerHTML = '<option value="">Select a loader...</option>';
+            loaders.forEach(entry => {
+                const version = entry.loader.version;
+                const option = document.createElement('option');
+                option.value = version;
+                option.textContent = version;
+                LOADER_VERSION_INPUT.appendChild(option);
+            });
+            LOADER_VERSION_INPUT.disabled = false;
+        } catch (error) {
+            console.error(error);
+            LOADER_VERSION_INPUT.innerHTML = `<option>No loaders found</option>`;
+        }
+    }
+
+    MC_VERSION_INPUT.addEventListener('change', async () => {
+        await populateLoaderVersions(MC_VERSION_INPUT.value);
+        CHECK_UPDATES_BTN.disabled = true;
+    });
+    
+    LOADER_VERSION_INPUT.addEventListener('change', () => {
+        CHECK_UPDATES_BTN.disabled = !LOADER_VERSION_INPUT.value;
+    });
+    
     function extractVersion(filename) {
         if (!filename || filename === 'N/A') return 'N/A';
         const match = filename.match(/(\d+\.\d+[\w.-]*)/);
@@ -41,7 +102,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const indexContent = await indexFile.async('string');
             appState.indexJson = JSON.parse(indexContent);
             
-            displayPackInfo();
+            await populateMcVersions();
+            await displayPackInfo();
             UPLOAD_SECTION.classList.add('hidden');
             VERSION_SECTION.classList.remove('hidden');
         } catch (error) {
@@ -50,25 +112,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    function displayPackInfo() {
+    async function displayPackInfo() {
         const { name, versionId, dependencies } = appState.indexJson;
         CURRENT_PACK_INFO.innerHTML = `<p><strong>Pack Name:</strong> ${name} (${versionId})</p><p><strong>Current MC Version:</strong> ${dependencies.minecraft}</p><p><strong>Current Loader:</strong> fabric-loader ${dependencies['fabric-loader']}</p>`;
+        
         MC_VERSION_INPUT.value = dependencies.minecraft;
-        LOADER_VERSION_INPUT.value = dependencies['fabric-loader'];
-    }
+        await populateLoaderVersions(dependencies.minecraft);
 
+        LOADER_VERSION_INPUT.value = dependencies['fabric-loader'];
+        CHECK_UPDATES_BTN.disabled = !LOADER_VERSION_INPUT.value;
+    }
+    
     CHECK_UPDATES_BTN.addEventListener('click', async () => {
         LOADING_INDICATOR.classList.remove('hidden');
         CHECK_UPDATES_BTN.disabled = true;
 
-        const targetMcVersion = MC_VERSION_INPUT.value.trim();
+        const targetMcVersion = MC_VERSION_INPUT.value; 
         if (!targetMcVersion) {
             alert('Please specify a target Minecraft version.');
             LOADING_INDICATOR.classList.add('hidden');
             CHECK_UPDATES_BTN.disabled = false;
             return;
         }
-
+        
         const modsToScan = [];
         const otherFilesToKeep = [];
         appState.indexJson.files.forEach(file => {
@@ -238,15 +304,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnText = GENERATE_PACK_BTN.querySelector('.btn-text');
         const btnSpinner = GENERATE_PACK_BTN.querySelector('.spinner-inline');
         
-        // --- Ladezustand aktivieren ---
         GENERATE_PACK_BTN.disabled = true;
         btnText.textContent = 'Generating...';
         btnSpinner.classList.remove('hidden');
 
         try {
             const newIndexJson = JSON.parse(JSON.stringify(appState.indexJson));
-            newIndexJson.dependencies.minecraft = MC_VERSION_INPUT.value.trim();
-            newIndexJson.dependencies['fabric-loader'] = LOADER_VERSION_INPUT.value.trim();
+            newIndexJson.dependencies.minecraft = MC_VERSION_INPUT.value;
+            newIndexJson.dependencies['fabric-loader'] = LOADER_VERSION_INPUT.value;
             newIndexJson.files = [];
 
             document.querySelectorAll('#mod-list-body tr').forEach(row => {
@@ -288,7 +353,6 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Error generating the new .mrpack file:", error);
             alert('An error occurred while generating the new file.');
         } finally {
-            // --- Ladezustand beenden, egal ob erfolgreich oder nicht ---
             GENERATE_PACK_BTN.disabled = false;
             btnText.textContent = 'Download New Modpack';
             btnSpinner.classList.add('hidden');
