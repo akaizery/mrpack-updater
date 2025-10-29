@@ -3,110 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modrinth Modpack Updater</title>
+    <title>Modpack Updater - akaizery.dev</title>
+    
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?display=swap&family=Space+Grotesk:wght@400;500;700">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <link rel="stylesheet" href="style.css">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" defer></script>
     <script src="script.js" defer></script>
 </head>
-<body>
-    <div class="container">
-        <h1>Modrinth Modpack Updater</h1>
+<body class="dark">
 
-        <div class="tab">
-            <button class="tablinks" onclick="openTab(event, 'updaterTab')">Updater</button>
-            <button class="tablinks" onclick="openTab(event, 'howtoTab')">How-to</button>
-        </div>
+    <div id="initial-loading-overlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <p>Processing your modpack...</p>
+    </div>
 
-        <div id="updaterTab" class="tabcontent">
-            <p>Upload your <code>.mrpack</code> file to analyze, check for updates, and rebuild it for a new Minecraft version.</p>
-            <section id="upload-section">
-                <h2>1. Upload Modpack</h2>
-                <input type="file" id="mrpack-upload" accept=".mrpack">
-            </section>
-
-            <section id="version-section" class="hidden">
-                <h2>2. Set Target Versions</h2>
-                <div id="current-pack-info"></div>
-                <div class="form-group">
-                    <label for="mc-version">Target Minecraft Version:</label>
-                    <select id="mc-version" disabled>
-                        <option>Loading versions...</option>
-                    </select>
+    <div class="page-wrapper">
+        <header class="main-header">
+            <div class="container">
+                <div class="header-content">
+                    <a href="https://akaizery.dev" class="nav-brand">
+                        <div class="logo-icon"></div>
+                        <span>AkaiZery</span>
+                    </a>
+                    <nav class="nav-links">
+                        <button class="nav-link active" onclick="openTab(event, 'updaterTab')">Updater</button>
+                        <button class="nav-link" onclick="openTab(event, 'howtoTab')">How-To</button>
+                    </nav>
                 </div>
-                <div class="form-group">
-                    <label for="loader-version">Target Fabric Loader Version:</label>
-                    <select id="loader-version" disabled>
-                        <option>Select MC version first...</option>
-                    </select>
-                </div>
-                <button id="check-updates-btn" disabled>Check for Updates</button>
-                <div id="loading-indicator" class="hidden">
-                    <div class="spinner"></div>
-                    <p>Checking mods... (this might take a moment for large packs)</p>
-                </div>
-            </section>
+            </div>
+        </header>
 
-            <section id="mods-section" class="hidden">
-                <h2>3. Customize Mods</h2>
-                <div class="default-action-selector">
-                    <label>Default action for incompatible mods:</label>
-                    <div class="radio-group">
-                        <input type="radio" id="default-disable" name="default-action" value="disable" checked>
-                        <label for="default-disable">Disable</label>
-                        <input type="radio" id="default-remove" name="default-action" value="remove">
-                        <label for="default-remove">Remove</label>
+        <main>
+            <div id="updaterTab" class="tab-content">
+                <section id="upload-section" class="content-section"><h1 class="main-title">Modrinth Modpack Updater</h1><p class="section-subtitle">Upload your <code>.mrpack</code>, choose a new Minecraft version, and get a rebuilt, updated modpack.</p><div class="button-wrapper"><label class="button-primary file-upload-label" for="mrpack-upload">Choose .mrpack File</label><input type="file" id="mrpack-upload" accept=".mrpack" class="hidden"></div></section>
+                <section id="version-section" class="content-section hidden"><h2 class="section-title">2. Set Target Version</h2><div id="current-pack-info" class="info-grid"></div><div class="form-grid"><label for="mc-version">Target Minecraft Version:</label><select id="mc-version" disabled><option>Loading...</option></select><label for="loader-version">Target Fabric Loader Version:</label><select id="loader-version" disabled><option>Select MC version first...</option></select></div><div class="button-wrapper"><button id="check-updates-btn" class="button-primary" disabled>Check for Updates</button></div><div id="loading-indicator" class="loading-indicator-inline hidden"><div class="spinner"></div><p>Contacting Modrinth API...</p></div><div id="api-error-message" class="message error hidden"><span class="material-symbols-outlined">error</span><p>Error text will go here.</p></div></section>
+                <section id="mods-section" class="content-section hidden"><h2 class="section-title">3. Customize Mods</h2><div id="mod-stats-summary" class="mod-stats-summary hidden"></div><div class="controls-grid"><div class="filter-controls"><input type="search" id="search-bar" placeholder="Search mods..."><select id="status-filter"><option value="all">Show All</option><option value="update">Update Available</option><option value="compatible">Up-to-date</option><option value="incompatible">Incompatible</option></select></div><div class="action-selector"><p>Default for incompatible mods:</p><div class="radio-group"><label><input type="radio" name="default-action" value="disable" checked> Disable</label><label><input type="radio" name="default-action" value="remove"> Remove</label></div></div></div><div class="table-wrapper"><table><thead><tr><th>Mod Name</th><th>Version</th><th>Status</th><th>Action</th></tr></thead><tbody id="mod-list-body"></tbody></table></div></section>
+                <section id="download-section" class="content-section hidden"><h2 class="section-title">4. Generate New Modpack</h2><p class="section-subtitle">If you are satisfied with your changes, click below to download the new <code>.mrpack</code> file.</p><div class="button-wrapper"><button id="generate-pack-btn" class="button-primary"><span class="btn-text">Download New Modpack</span><div class="spinner-inline hidden"></div></button></div></section>
+            </div>
+            <div id="howtoTab" class="tab-content" style="display: none;">
+                <section class="content-section">
+                    <h1 class="main-title">How to Use This Tool</h1>
+                    <div class="howto-grid">
+                        <div class="howto-card"><h3>1. Export Modpack</h3><p>First, export your existing modpack as a <code>.mrpack</code> file from your launcher (e.g., Prism Launcher, Modrinth App).</p></div>
+                        <div class="howto-card"><h3>2. Upload</h3><p>Click "Choose File" on this page and select your local <code>.mrpack</code> file to begin.</p></div>
+                        <div class="howto-card"><h3>3. Set Versions</h3><p>Select the target Minecraft and Fabric Loader versions you want to update to.</p></div>
+                        <div class="howto-card"><h3>4. Check Updates</h3><p>The tool will analyze your mods against the Modrinth database for compatibility.</p></div>
+                        <div class="howto-card"><h3>5. Customize</h3><p>Review the list and decide the action for each mod (Update, Keep, Disable, Remove).</p></div>
+                        <div class="howto-card"><h3>6. Generate</h3><p>Click "Download" to get your freshly updated and configured <code>.mrpack</code> file.</p></div>
+                        <div class="howto-card"><h3>7. Install</h3><p>Import the new <code>.mrpack</code> file into your launcher to create a new, updated instance.</p></div>
+                        <div class="howto-card"><h3>8. Enjoy</h3><p>Start your updated Minecraft instance and enjoy!</p></div>
                     </div>
-                </div>
-                <div class="filter-controls">
-                    <input type="search" id="search-bar" placeholder="Search by mod name...">
-                    <select id="status-filter">
-                        <option value="all">Show All</option>
-                        <option value="update">Update Available</option>
-                        <option value="compatible">Up-to-date</option>
-                        <option value="incompatible">Incompatible</option>
-                    </select>
-                </div>
-                <div class="table-wrapper">
-                    <table id="mod-list-table">
-                        <thead>
-                            <tr>
-                                <th>Mod Name</th>
-                                <th>Target Version</th>
-                                <th>Status</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="mod-list-body"></tbody>
-                    </table>
-                </div>
-            </section>
+                </section>
+            </div>
+        </main>
 
-            <section id="download-section" class="hidden">
-                <h2>4. Generate New Modpack</h2>
-                <p>Your customizations are ready. Click the button below to download your new <code>.mrpack</code> file.</p>
-                <button id="generate-pack-btn">
-                    <span class="btn-text">Download New Modpack</span>
-                    <div class="spinner-inline hidden"></div>
-                </button>
-            </section>
-        </div>
-
-        <div id="howtoTab" class="tabcontent">
-            <h2>How to Use</h2>
-            <ol>
-                <li><strong>Upload Your Modpack</strong><br>Click "Choose File" and select your <code>.mrpack</code> file.</li>
-                <li><strong>Set Target Versions</strong><br>Select the desired Minecraft and Fabric Loader versions you want to update to.</li>
-                <li><strong>Check for Updates</strong><br>Click the "Check for Updates" button. The tool will analyze your mods against the Modrinth database.</li>
-                <li><strong>Customize Mods</strong><br>Review the list of your mods. You can see which are compatible, have updates, or are incompatible. Use the dropdown to decide whether to update, keep, disable, or remove each mod.</li>
-                <li><strong>Generate &amp; Download</strong><br>Once you're happy with your selections, click "Download New Modpack" to get your updated file.</li>
-            </ol>
-        </div>
-        
-        <footer>
-            <span>Created by<a href="https://akaizery.dev">AkaiZery</a></span> | 
-            <a href="https://github.com/akaizery">Github</a> | 
-            <a href="https://disc.akaizery.dev/">Discord</a> |
-            <a href="https://github.com/akaizery/mrpack-updater">Source Code</a>
+        <footer class="site-footer">
+            <div class="container footer-content">
+                <div class="footer-links-left">
+                    <span>2025 Created by <a href="https://akaizery.dev" target="_blank">AkaiZery</a></span> | 
+                    <a href="https://github.com/akaizery" target="_blank">Github</a> | 
+                    <a href="https://discordapp.com/users/948261337178439771" target="_blank">Discord</a> |
+                    <a href="https://github.com/akaizery/mrpack-updater" target="_blank">Source Code</a>
+                </div>
+                <div class="footer-social-links">
+                    <a href="mailto:mail@akaizery.dev" target="_blank" rel="noopener noreferrer" aria-label="E-Mail"><i class="fas fa-envelope"></i></a>
+                    <a href="https://github.com/akaizery" target="_blank" rel="noopener noreferrer" aria-label="GitHub Profile"><i class="fab fa-github"></i></a>
+                    <a href="https://disc.akaizery.dev" target="_blank" rel="noopener noreferrer" aria-label="Discord Profile"><i class="fab fa-discord"></i></a>
+                </div>
+            </div>
         </footer>
     </div>
 </body>
