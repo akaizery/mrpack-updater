@@ -140,15 +140,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const newZip = new JSZip();
             
-            newIndexJson.files.push(...appState.otherFiles);
-            for (const fileInfo of appState.otherFiles) {
-                const originalFile = appState.originalZip.file(fileInfo.path);
-                if (originalFile) {
-                    const blob = await originalFile.async('blob');
-                    newZip.file(fileInfo.path, blob);
+            // Phase 1: Copy ALL non-mod files from the original ZIP (overrides, configs, etc.)
+            for (const filePath in appState.originalZip.files) {
+                if (!filePath.startsWith('mods/') && filePath !== 'modrinth.index.json') {
+                    const fileObject = appState.originalZip.files[filePath];
+                    if (!fileObject.dir) {
+                        const blob = await fileObject.async('blob');
+                        newZip.file(filePath, blob);
+                    }
                 }
             }
+            // Add the corresponding MANIFEST entries for these non-mod files.
+            newIndexJson.files.push(...appState.otherFiles);
 
+            // Phase 2: Build the new file list for modrinth.index.json based on user actions.
+            // NO files are added to the zip here, only their manifest entries are added to the JSON.
             const modRows = document.querySelectorAll('#mod-list-body tr');
             for (const row of modRows) {
                 const modId = row.dataset.modId;
@@ -167,6 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
+            // Phase 3: Finalize and download the new .mrpack
             newZip.file('modrinth.index.json', JSON.stringify(newIndexJson, null, 2));
             const content = await newZip.generateAsync({ type: 'blob' });
             
