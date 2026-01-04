@@ -1,0 +1,5 @@
+{
+  "name": "AkaiZery Modpack Updater",
+  "description": "A sleek tool to update Modrinth .mrpack files to new Minecraft versions with one-click rebuilding.",
+  "requestFramePermissions": []
+}

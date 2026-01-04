@@ -1,83 +1,101 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modpack Updater - akaizery.dev</title>
-    
-    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?display=swap&family=Space+Grotesk:wght@400;500;700">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <link rel="stylesheet" href="style.css">
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" defer></script>
-    <script src="script.js" defer></script>
+    <title>Modpack Updater | AkaiZery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #030303;
+            --text-color: #f4f4f5;
+            --text-muted: #71717a;
+            --grid-color: rgba(255, 255, 255, 0.03);
+            --header-bg: rgba(3, 3, 3, 0.8);
+            --card-bg: rgba(24, 24, 27, 0.3);
+            --border-color: rgba(255, 255, 255, 0.05);
+            --input-bg: #09090b;
+            --accent-glow: rgba(230, 57, 70, 0.15);
+        }
+
+        .light {
+            --bg-color: #fafafa;
+            --text-color: #09090b;
+            --text-muted: #52525b;
+            --grid-color: rgba(0, 0, 0, 0.04);
+            --header-bg: rgba(250, 250, 250, 0.8);
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --border-color: rgba(0, 0, 0, 0.08);
+            --input-bg: #ffffff;
+            --accent-glow: rgba(230, 57, 70, 0.1);
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            background-image: 
+                linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-attachment: fixed;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1a1a1a;
+        }
+        .light ::-webkit-scrollbar-thumb {
+            background: #d4d4d8;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #E63946;
+        }
+
+        .nav-item-box {
+            position: relative;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .nav-item-active {
+            border-color: rgba(230, 57, 70, 0.3);
+            background: rgba(230, 57, 70, 0.03);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .light .nav-item-active {
+            background: rgba(230, 57, 70, 0.05);
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "jszip": "https://esm.sh/jszip@^3.10.1",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "framer-motion": "https://esm.sh/framer-motion@^12.23.26",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
 </head>
-<body class="dark">
-
-    <div id="initial-loading-overlay" class="loading-overlay hidden">
-        <div class="spinner"></div>
-        <p>Processing your modpack...</p>
-    </div>
-
-    <div class="page-wrapper">
-        <header class="main-header">
-            <div class="container">
-                <div class="header-content">
-                    <a href="https://akaizery.dev" class="nav-brand">
-                        <div class="logo-icon"></div>
-                        <span>AkaiZery</span>
-                    </a>
-                    <nav class="nav-links">
-                        <button class="nav-link active" onclick="openTab(event, 'updaterTab')">Updater</button>
-                        <button class="nav-link" onclick="openTab(event, 'howtoTab')">How-To</button>
-                    </nav>
-                </div>
-            </div>
-        </header>
-
-        <main>
-            <div id="updaterTab" class="tab-content">
-                <section id="upload-section" class="content-section"><h1 class="main-title">Modrinth Modpack Updater</h1><p class="section-subtitle">Upload your <code>.mrpack</code>, choose a new Minecraft version, and get a rebuilt, updated modpack.</p><div class="button-wrapper"><label class="button-primary file-upload-label" for="mrpack-upload">Choose .mrpack File</label><input type="file" id="mrpack-upload" accept=".mrpack" class="hidden"></div></section>
-                <section id="version-section" class="content-section hidden"><h2 class="section-title">2. Set Target Version</h2><div id="current-pack-info" class="info-grid"></div><div class="form-grid"><label for="mc-version">Target Minecraft Version:</label><select id="mc-version" disabled><option>Loading...</option></select><label for="loader-version">Target Fabric Loader Version:</label><select id="loader-version" disabled><option>Select MC version first...</option></select></div><div class="button-wrapper"><button id="check-updates-btn" class="button-primary" disabled>Check for Updates</button></div><div id="loading-indicator" class="loading-indicator-inline hidden"><div class="spinner"></div><p>Contacting Modrinth API...</p></div><div id="api-error-message" class="message error hidden"><span class="material-symbols-outlined">error</span><p>Error text will go here.</p></div></section>
-                <section id="mods-section" class="content-section hidden"><h2 class="section-title">3. Customize Mods</h2><div id="mod-stats-summary" class="mod-stats-summary hidden"></div><div class="controls-grid"><div class="filter-controls"><input type="search" id="search-bar" placeholder="Search mods..."><select id="status-filter"><option value="all">Show All</option><option value="update">Update Available</option><option value="compatible">Up-to-date</option><option value="incompatible">Incompatible</option></select></div><div class="action-selector"><p>Default for incompatible mods:</p><div class="radio-group"><label><input type="radio" name="default-action" value="disable" checked> Disable</label><label><input type="radio" name="default-action" value="remove"> Remove</label></div></div></div><div class="table-wrapper"><table><thead><tr><th>Mod Name</th><th>Version</th><th>Status</th><th>Action</th></tr></thead><tbody id="mod-list-body"></tbody></table></div></section>
-                <section id="download-section" class="content-section hidden"><h2 class="section-title">4. Generate New Modpack</h2><p class="section-subtitle">If you are satisfied with your changes, click below to download the new <code>.mrpack</code> file.</p><div class="button-wrapper"><button id="generate-pack-btn" class="button-primary"><span class="btn-text">Download New Modpack</span><div class="spinner-inline hidden"></div></button></div></section>
-            </div>
-            <div id="howtoTab" class="tab-content" style="display: none;">
-                <section class="content-section">
-                    <h1 class="main-title">How to Use This Tool</h1>
-                    <div class="howto-grid">
-                        <div class="howto-card"><h3>1. Export Modpack</h3><p>First, export your existing modpack as a <code>.mrpack</code> file from your launcher (e.g., Prism Launcher, Modrinth App).</p></div>
-                        <div class="howto-card"><h3>2. Upload</h3><p>Click "Choose File" on this page and select your local <code>.mrpack</code> file to begin.</p></div>
-                        <div class="howto-card"><h3>3. Set Versions</h3><p>Select the target Minecraft and Fabric Loader versions you want to update to.</p></div>
-                        <div class="howto-card"><h3>4. Check Updates</h3><p>The tool will analyze your mods against the Modrinth database for compatibility.</p></div>
-                        <div class="howto-card"><h3>5. Customize</h3><p>Review the list and decide the action for each mod (Update, Keep, Disable, Remove).</p></div>
-                        <div class="howto-card"><h3>6. Generate</h3><p>Click "Download" to get your freshly updated and configured <code>.mrpack</code> file.</p></div>
-                        <div class="howto-card"><h3>7. Install</h3><p>Import the new <code>.mrpack</code> file into your launcher to create a new, updated instance.</p></div>
-                        <div class="howto-card"><h3>8. Enjoy</h3><p>Start your updated Minecraft instance and enjoy!</p></div>
-                    </div>
-                </section>
-            </div>
-        </main>
-
-        <footer class="site-footer">
-            <div class="container footer-content">
-                <div class="footer-links-left">
-                    <span>2025 Created by <a href="https://akaizery.dev" target="_blank">AkaiZery</a></span> | 
-                    <a href="https://github.com/akaizery" target="_blank">Github</a> | 
-                    <a href="https://discordapp.com/users/948261337178439771" target="_blank">Discord</a> |
-                    <a href="https://github.com/akaizery/mrpack-updater" target="_blank">Source Code</a>
-                </div>
-                <div class="footer-social-links">
-                    <a href="mailto:mail@akaizery.dev" target="_blank" rel="noopener noreferrer" aria-label="E-Mail"><i class="fas fa-envelope"></i></a>
-                    <a href="https://github.com/akaizery" target="_blank" rel="noopener noreferrer" aria-label="GitHub Profile"><i class="fab fa-github"></i></a>
-                    <a href="https://disc.akaizery.dev" target="_blank" rel="noopener noreferrer" aria-label="Discord Profile"><i class="fab fa-discord"></i></a>
-                </div>
-            </div>
-        </footer>
-    </div>
+<body>
+    <div id="root"></div>
+<script type="module" src="/index.tsx"></script>
 </body>
 </html>
